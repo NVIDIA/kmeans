@@ -3,20 +3,10 @@
 #include <thrust/fill.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/iterator/constant_iterator.h>
-#include <iostream>
 
-#include <cstdio>
 
-template<typename T>
-void print_array(T& array, int m, int n) {
-    for(int i = 0; i < m; i++) {
-        for(int j = 0; j < n; j++) {
-            typename T::value_type value = array[i * n + j];
-            std::cout << value << " ";
-        }
-        std::cout << std::endl;
-    }
-}
+namespace kmeans {
+namespace detail {
 
 __device__ double atomicAdd(double* address, double val)
 {
@@ -82,11 +72,16 @@ __global__ void scale_centroids(int d, int k, int* counts, double* centroids) {
     int global_id_y = threadIdx.y + blockIdx.y * blockDim.y;
     if ((global_id_x < d) && (global_id_y < k)) {
         int count = counts[global_id_y];
+        //To avoid introducing divide by zero errors
+        //If a centroid has no weight, we'll do no normalization
+        //This will keep it's coordinates defined.
+        if (count < 1) {
+            count = 1;
+        }
         double scale = 1.0/double(count);
         centroids[global_id_x + d * global_id_y] *= scale;
     }
 }
-
 
 void find_centroids(int n, int d, int k,
                     thrust::device_vector<double>& data,
@@ -125,7 +120,7 @@ void find_centroids(int n, int d, int k,
     //Calculate centroids 
     int n_threads_x = 64;
     int n_threads_y = 16;
-    calculate_centroids<<<dim3(1, 30), dim3(n_threads_x, n_threads_y)>>>
+    detail::calculate_centroids<<<dim3(1, 30), dim3(n_threads_x, n_threads_y)>>>
         (n, d, k,
          thrust::raw_pointer_cast(data.data()),
          thrust::raw_pointer_cast(labels.data()),
@@ -133,44 +128,11 @@ void find_centroids(int n, int d, int k,
          thrust::raw_pointer_cast(centroids.data()));
     
     //Scale centroids
-    scale_centroids<<<dim3((d-1)/32+1, (k-1)/32+1), dim3(32, 32)>>>
+    detail::scale_centroids<<<dim3((d-1)/32+1, (k-1)/32+1), dim3(32, 32)>>>
         (d, k,
          thrust::raw_pointer_cast(dense_counts.data()),
          thrust::raw_pointer_cast(centroids.data()));
 }
 
-
-int main() {
-    int n = 5;
-    int d = 3;
-    int k = 2;
-
-    thrust::device_vector<double> data(n * d);
-    thrust::device_vector<int> labels(n);
-    thrust::device_vector<double> centroids(k * d);
-    
-    labels[0] = 1;
-    labels[1] = 1;
-    labels[2] = 1;
-    labels[3] = 0;
-    labels[4] = 1;
-
-    std::cout << "Labels: " << std::endl;
-    print_array(labels, n, 1);
-    std::cout << std::endl;
-    
-    for(int i = 0; i < n; i++) {
-        for(int j = 0; j < d; j++) {
-            data[i * d + j] = i * d + j;
-        }
-    }
-    std::cout << "Data: " << std::endl;
-    print_array(data, n, d);
-    std::cout << std::endl;
-    find_centroids(n, d, k, data, labels, centroids);
-
-    std::cout << "New centroids: " << std::endl;
-    print_array(centroids, k, d);
-    std::cout << std::endl;
-
+}
 }
