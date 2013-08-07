@@ -1,5 +1,5 @@
 #include <thrust/device_vector.h>
-#include "centroids.h"
+#include "kmeans.h"
 #include <iostream>
 
 template<typename T>
@@ -14,6 +14,7 @@ void print_array(T& array, int m, int n) {
 }
 
 int main() {
+    int iterations = 50;
     int n = 1e6;
     int d = 50;
     int k = 100;
@@ -23,7 +24,7 @@ int main() {
     thrust::device_vector<double> centroids(k * d);
     
     
-    kmeans::detail::find_centroids(n, d, k, data, labels, centroids);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
 
 
 }
