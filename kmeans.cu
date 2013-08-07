@@ -25,7 +25,7 @@ void kmeans(int iterations,
         int changes = detail::relabel(n, k, pairwise_distances, labels);
        
         std::cout << "Iteration " << i << " produced " << changes
-                  << changes << std::endl;
+                  << " changes" << std::endl;
         
         detail::find_centroids(n, d, k, data, labels, centroids);
         

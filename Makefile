@@ -1,4 +1,4 @@
-CUDA_ARCH ?= sm_20
+CUDA_ARCH ?= sm_35
 
 test: test.cu centroids.o labels.o kmeans.o
 	nvcc -arch=$(CUDA_ARCH) -Xptxas -v -o test test.cu centroids.o labels.o kmeans.o -lcublas
