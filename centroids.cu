@@ -5,9 +5,6 @@
 #include <thrust/iterator/constant_iterator.h>
 
 
-namespace kmeans {
-namespace detail {
-
 __device__ double atomicAdd(double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -22,23 +19,32 @@ __device__ double atomicAdd(double* address, double val)
     return __longlong_as_double(old);
 }
 
+namespace kmeans {
+namespace detail {
+
 __device__ __forceinline__ void update_centroid(int label, int dimension,
                                                 int d,
-                                                double accumulator, double* centroids) {
+                                                double accumulator, double* centroids,
+                                                int count, int* counts) {
     int index = label * d + dimension;
     double* target = centroids + index;
     atomicAdd(target, accumulator);
+    if (dimension == 0) {
+        atomicAdd(counts + label, count);
+    }             
 }
 
 __global__ void calculate_centroids(int n, int d, int k,
                                     double* data,
                                     int* ordered_labels,
                                     int* ordered_indices,
-                                    double* centroids) {
+                                    double* centroids,
+                                    int* counts) {
     int in_flight = blockDim.y * gridDim.y;
     int labels_per_row = (n - 1) / in_flight + 1; 
     for(int dimension = threadIdx.x; dimension < d; dimension += blockDim.x) {
         double accumulator = 0;
+        int count = 0;
         int global_id = threadIdx.y + blockIdx.y * blockDim.y;
         int start = global_id * labels_per_row;
         int end = (global_id + 1) * labels_per_row;
@@ -52,17 +58,21 @@ __global__ void calculate_centroids(int n, int d, int k,
                 if (label != prior_label) {
                     update_centroid(prior_label, dimension,
                                     d,
-                                    accumulator, centroids);
+                                    accumulator, centroids,
+                                    count, counts);
                     accumulator = 0;
+                    count = 0;
                 }
   
                 double value = data[dimension + ordered_indices[label_number] * d];
                 accumulator += value;
                 prior_label = label;
+                count++;
             }
             update_centroid(prior_label, dimension,
                             d,
-                            accumulator, centroids);
+                            accumulator, centroids,
+                            count, counts);
         }
     }
 }
@@ -88,6 +98,7 @@ void find_centroids(int n, int d, int k,
                     thrust::device_vector<int>& labels,
                     thrust::device_vector<double>& centroids) {
     thrust::device_vector<int> indices(n);
+    thrust::device_vector<int> counts(k);
     thrust::copy(thrust::counting_iterator<int>(0),
                  thrust::counting_iterator<int>(n),
                  indices.begin());
@@ -96,27 +107,16 @@ void find_centroids(int n, int d, int k,
                         labels.end(),
                         indices.begin());
 
-    //Count labels with the same value
-    thrust::device_vector<int> reduced_labels(k);
-    thrust::device_vector<int> reduced_counts(k);
-    thrust::reduce_by_key(labels.begin(),
-                          labels.end(),
-                          thrust::constant_iterator<int>(1),
-                          reduced_labels.begin(),
-                          reduced_counts.begin());
-    
-    //Create dense vector mapping centroid id to count
-    thrust::device_vector<int> dense_counts(k);
-    thrust::scatter(reduced_counts.begin(),
-                    reduced_counts.end(),
-                    reduced_labels.begin(),
-                    dense_counts.begin());
-
     //Initialize centroids to all zeros
     thrust::fill(centroids.begin(),
                  centroids.end(),
                  0);
 
+    //Initialize counts to all zeros
+    thrust::fill(counts.begin(),
+                 counts.end(),
+                 0);
+    
     //Calculate centroids 
     int n_threads_x = 64;
     int n_threads_y = 16;
@@ -125,12 +125,13 @@ void find_centroids(int n, int d, int k,
          thrust::raw_pointer_cast(data.data()),
          thrust::raw_pointer_cast(labels.data()),
          thrust::raw_pointer_cast(indices.data()),
-         thrust::raw_pointer_cast(centroids.data()));
+         thrust::raw_pointer_cast(centroids.data()),
+         thrust::raw_pointer_cast(counts.data()));
     
     //Scale centroids
     detail::scale_centroids<<<dim3((d-1)/32+1, (k-1)/32+1), dim3(32, 32)>>>
         (d, k,
-         thrust::raw_pointer_cast(dense_counts.data()),
+         thrust::raw_pointer_cast(counts.data()),
          thrust::raw_pointer_cast(centroids.data()));
 }
 
