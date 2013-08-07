@@ -85,6 +85,12 @@ int main() {
     thrust::device_vector<int> labels(n);
     thrust::device_vector<double> centroids(k * d);
 
+    std::cout << "Generating random data" << std::endl;
+    std::cout << "Number of points: " << n << std::endl;
+    std::cout << "Number of dimensions: " << d << std::endl;
+    std::cout << "Number of clusters: " << k << std::endl;
+    std::cout << "Number of iterations: " << iterations << std::endl;
+    
     random_data(data, n, d);
     random_labels(labels, n, k);
 
