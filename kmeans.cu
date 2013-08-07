@@ -10,7 +10,7 @@ void kmeans(int iterations,
     thrust::device_vector<double> data_dots(n);
     thrust::device_vector<double> centroid_dots(n);
     thrust::device_vector<double> pairwise_distances(n * k);
-
+    
     detail::labels_init();
 
     detail::find_centroids(n, d, k, data, labels, centroids);
@@ -22,8 +22,11 @@ void kmeans(int iterations,
                                     data, centroids, data_dots,
                                     centroid_dots, pairwise_distances);
 
-        detail::relabel(n, k, pairwise_distances, labels);
-
+        int changes = detail::relabel(n, k, pairwise_distances, labels);
+       
+        std::cout << "Iteration " << i << " produced " << changes
+                  << changes << std::endl;
+        
         detail::find_centroids(n, d, k, data, labels, centroids);
         
     }

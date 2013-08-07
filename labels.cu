@@ -91,8 +91,15 @@ void calculate_distances(int n, int d, int k,
                          thrust::device_vector<double>& pairwise_distances) {
     detail::make_self_dots(k, d, centroids, centroid_dots);
     detail::make_all_dots(n, k, data_dots, centroid_dots, pairwise_distances);
+    //||x-y||^2 = ||x||^2 + ||y||^2 - 2 x . y
+    //pairwise_distances has ||x||^2 + ||y||^2, so beta = 1
+    //The dgemm calculates x.y for all x and y, so alpha = -2.0
     double alpha = -2.0;
     double beta = 1.0;
+    //If the data were in standard column major order, we'd do a
+    //centroids * data ^ T
+    //But the data is in row major order, so we have to permute
+    //the arguments a little
     cublasStatus_t stat =
         cublasDgemm(detail::cublas_handle,
                     CUBLAS_OP_T, CUBLAS_OP_N,
@@ -112,11 +119,12 @@ void calculate_distances(int n, int d, int k,
 
 }
                          
-__global__ void make_new_labels(int n, int k, double* distances, int* labels) {
+__global__ void make_new_labels(int n, int k, double* distances, int* labels, int* changes) {
     double min_distance = DBL_MAX;
     double min_idx = -1;
     int global_id = threadIdx.x + blockIdx.x * blockDim.x;
     if (global_id < n) {
+        int old_label = labels[global_id];
         for(int c = 0; c < k; c++) {
             double distance = distances[c * n + global_id];
             if (distance < min_distance) {
@@ -125,17 +133,24 @@ __global__ void make_new_labels(int n, int k, double* distances, int* labels) {
             }
         }
         labels[global_id] = min_idx;
+        if (old_label != min_idx) {
+            atomicAdd(changes, 1);
+        }
     }
 }
 
 
-void relabel(int n, int k,
+int relabel(int n, int k,
              thrust::device_vector<double>& pairwise_distances,
              thrust::device_vector<int>& labels) {
+    thrust::device_vector<int> changes(1);
+    changes[0] = 0;
     make_new_labels<<<(n-1)/256+1,256>>>(
         n, k,
         thrust::raw_pointer_cast(pairwise_distances.data()),
-        thrust::raw_pointer_cast(labels.data()));
+        thrust::raw_pointer_cast(labels.data()),
+        thrust::raw_pointer_cast(changes.data()));
+    return changes[0];
 }
 
 }

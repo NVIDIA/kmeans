@@ -83,7 +83,7 @@ __global__ void scale_centroids(int d, int k, int* counts, double* centroids) {
         int count = counts[global_id_y];
         //To avoid introducing divide by zero errors
         //If a centroid has no weight, we'll do no normalization
-        //This will keep it's coordinates defined.
+        //This will keep its coordinates defined.
         if (count < 1) {
             count = 1;
         }
@@ -94,6 +94,9 @@ __global__ void scale_centroids(int d, int k, int* counts, double* centroids) {
 
 void find_centroids(int n, int d, int k,
                     thrust::device_vector<double>& data,
+                    //Labels are taken by value because
+                    //they get destroyed in sort_by_key
+                    //So we need to make a copy of them
                     thrust::device_vector<int> labels,
                     thrust::device_vector<double>& centroids) {
     thrust::device_vector<int> indices(n);
@@ -119,6 +122,8 @@ void find_centroids(int n, int d, int k,
     //Calculate centroids 
     int n_threads_x = 64;
     int n_threads_y = 16;
+    //XXX Number of blocks here is hard coded at 30
+    //This should be taken care of more thoughtfully.
     detail::calculate_centroids<<<dim3(1, 30), dim3(n_threads_x, n_threads_y)>>>
         (n, d, k,
          thrust::raw_pointer_cast(data.data()),

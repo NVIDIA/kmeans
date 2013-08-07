@@ -21,7 +21,7 @@ void calculate_distances(int n, int d, int k,
                          thrust::device_vector<double>& centroid_dots,
                          thrust::device_vector<double>& pairwise_distances);
 
-void relabel(int n, int k,
+int relabel(int n, int k,
              thrust::device_vector<double>& pairwise_distances,
              thrust::device_vector<int>& labels); 
 
