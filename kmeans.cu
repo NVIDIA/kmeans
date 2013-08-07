@@ -1,7 +1,4 @@
 #include "kmeans.h"
-#include "labels.h"
-#include "centroids.h"
-#include <cublas_v2.h>
 
 namespace kmeans {
 

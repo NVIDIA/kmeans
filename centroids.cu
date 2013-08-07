@@ -2,7 +2,6 @@
 #include <thrust/sort.h>
 #include <thrust/fill.h>
 #include <thrust/iterator/counting_iterator.h>
-#include <thrust/iterator/constant_iterator.h>
 
 
 __device__ double atomicAdd(double* address, double val)

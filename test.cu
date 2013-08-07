@@ -1,7 +1,5 @@
 #include <thrust/device_vector.h>
 #include "kmeans.h"
-#include "centroids.h"
-#include "labels.h"
 #include <iostream>
 
 #include <cstdlib>

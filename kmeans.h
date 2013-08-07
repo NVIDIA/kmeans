@@ -1,5 +1,7 @@
 #pragma once
 #include <thrust/device_vector.h>
+#include "centroids.h"
+#include "labels.h"
 
 namespace kmeans {
 
