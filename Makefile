@@ -7,5 +7,5 @@ centroids.o: centroids.cu centroids.h
 labels.o: labels.cu labels.h
 	nvcc -arch=sm_20 -Xptxas -v -c -o labels.o labels.cu
 
-kmeans.o: kmeans.cu kmeans.h
+kmeans.o: kmeans.cu kmeans.h centroids.h labels.h
 	nvcc -arch=sm_20 -Xptxas -v -c -o kmeans.o kmeans.cu

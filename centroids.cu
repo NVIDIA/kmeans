@@ -95,7 +95,7 @@ __global__ void scale_centroids(int d, int k, int* counts, double* centroids) {
 
 void find_centroids(int n, int d, int k,
                     thrust::device_vector<double>& data,
-                    thrust::device_vector<int>& labels,
+                    thrust::device_vector<int> labels,
                     thrust::device_vector<double>& centroids) {
     thrust::device_vector<int> indices(n);
     thrust::device_vector<int> counts(k);

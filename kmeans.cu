@@ -16,13 +16,19 @@ void kmeans(int iterations,
 
     detail::labels_init();
 
+    detail::find_centroids(n, d, k, data, labels, centroids);
     
     detail::make_self_dots(n, d, data, data_dots);
+
     for(int i = 0; i < iterations; i++) {
         detail::calculate_distances(n, d, k,
-                                    data, centroids, data_dots, centroid_dots, pairwise_distances);
+                                    data, centroids, data_dots,
+                                    centroid_dots, pairwise_distances);
+
         detail::relabel(n, k, pairwise_distances, labels);
+
         detail::find_centroids(n, d, k, data, labels, centroids);
+        
     }
 
 }

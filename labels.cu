@@ -132,9 +132,10 @@ __global__ void make_new_labels(int n, int k, double* distances, int* labels) {
 void relabel(int n, int k,
              thrust::device_vector<double>& pairwise_distances,
              thrust::device_vector<int>& labels) {
-    make_new_labels<<<(n-1)/256+1,256>>>(n, k,
-                                         thrust::raw_pointer_cast(pairwise_distances.data()),
-                                         thrust::raw_pointer_cast(labels.data()));
+    make_new_labels<<<(n-1)/256+1,256>>>(
+        n, k,
+        thrust::raw_pointer_cast(pairwise_distances.data()),
+        thrust::raw_pointer_cast(labels.data()));
 }
 
 }
