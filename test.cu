@@ -1,5 +1,6 @@
 #include <thrust/device_vector.h>
 #include "kmeans.h"
+#include "timer.h"
 #include <iostream>
 
 #include <cstdlib>
@@ -93,18 +94,10 @@ int main() {
     
     random_data(data, n, d);
     random_labels(labels, n, k);
-
-    cudaEvent_t start,stop;
-    float time=0;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
-
+    kmeans::timer t;
+    t.start();
     kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
-    
-    cudaEventRecord(stop, 0);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&time, start, stop);
+    float time = t.stop();
     std::cout << "  Time: " << time/1000.0 << " s" << std::endl;
 
     
