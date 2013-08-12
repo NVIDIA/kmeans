@@ -113,11 +113,6 @@ void find_centroids(int n, int d, int k,
     thrust::fill(centroids.begin(),
                  centroids.end(),
                  0);
-
-    //Initialize counts to all zeros
-    thrust::fill(counts.begin(),
-                 counts.end(),
-                 0);
     
     //Calculate centroids 
     int n_threads_x = 64;
