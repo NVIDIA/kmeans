@@ -117,36 +117,46 @@ void more_tiny_test() {
 
 
 int main() {
-    // std::cout << "Tiny test" << std::endl;
-    // tiny_test();
-    // std::cout << "End of Tiny test" << std::endl;
-    
-    std::cout << "More Tiny test" << std::endl;
-    more_tiny_test();
-    std::cout << "End of More Tiny test" << std::endl;
-    
-    // int iterations = 50;
-    // int n = 1e6;
-    // int d = 50;
-    // int k = 100;
+    std::cout << "Input a character to choose a test:" << std::endl;
+    std::cout << "Tiny test: t" << std::endl;
+    std::cout << "More tiny test: m" << std::endl;
+    std::cout << "Huge test: h: " << std::endl;
+    char c;
+    std::cin >> c;
+    switch (c) {
+    case 't':
+        tiny_test();
+        exit(0);
+    case 'm':
+        more_tiny_test();
+        exit(0);
+    case 'h':
+        break;
+    default:
+        std::cout << "Choice not understood, running huge test" << std::endl;
+    }
+    int iterations = 50;
+    int n = 1e6;
+    int d = 50;
+    int k = 100;
 
-    // thrust::device_vector<double> data(n * d);
-    // thrust::device_vector<int> labels(n);
-    // thrust::device_vector<double> centroids(k * d);
+    thrust::device_vector<double> data(n * d);
+    thrust::device_vector<int> labels(n);
+    thrust::device_vector<double> centroids(k * d);
 
-    // std::cout << "Generating random data" << std::endl;
-    // std::cout << "Number of points: " << n << std::endl;
-    // std::cout << "Number of dimensions: " << d << std::endl;
-    // std::cout << "Number of clusters: " << k << std::endl;
-    // std::cout << "Number of iterations: " << iterations << std::endl;
+    std::cout << "Generating random data" << std::endl;
+    std::cout << "Number of points: " << n << std::endl;
+    std::cout << "Number of dimensions: " << d << std::endl;
+    std::cout << "Number of clusters: " << k << std::endl;
+    std::cout << "Number of iterations: " << iterations << std::endl;
     
-    // random_data(data, n, d);
-    // random_labels(labels, n, k);
-    // kmeans::timer t;
-    // t.start();
-    // kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
-    // float time = t.stop();
-    // std::cout << "  Time: " << time/1000.0 << " s" << std::endl;
+    random_data(data, n, d);
+    random_labels(labels, n, k);
+    kmeans::timer t;
+    t.start();
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
+    float time = t.stop();
+    std::cout << "  Time: " << time/1000.0 << " s" << std::endl;
 
     
 }
