@@ -59,6 +59,66 @@ void tiny_test() {
 
 }
 
+
+void more_tiny_test() {
+	double dataset[] = {
+		0.5, 0.5,
+		1.5, 0.5,
+		1.5, 1.5,
+		0.5, 1.5,
+		1.1, 1.2,
+		0.5, 15.5,
+		1.5, 15.5,
+		1.5, 16.5,
+		0.5, 16.5,
+		1.2, 16.1,
+		15.5, 15.5,
+		16.5, 15.5,
+		16.5, 16.5,
+		15.5, 16.5,
+		15.6, 16.2,
+		15.5, 0.5,
+		16.5, 0.5,
+		16.5, 1.5,
+		15.5, 1.5,
+		15.7, 1.6};
+	double centers[] = {
+		0.5, 0.5,
+		1.5, 0.5,
+		1.5, 1.5,
+		0.5, 1.5};
+	 
+    int iterations = 3;
+    int n = 20;
+    int d = 2;
+    int k = 4;
+	
+	thrust::device_vector<double> data(dataset, dataset+n*d);
+    thrust::device_vector<int> labels(n);
+    thrust::device_vector<double> centroids(centers, centers+k*d);
+
+    std::cout << "Data: " << std::endl;
+    print_array(data, n, d);
+
+    labels[0] = 0;
+    labels[1] = 0;
+    labels[2] = 0;
+    labels[3] = 1;
+    labels[4] = 1;
+
+    std::cout << "Labels: " << std::endl;
+    print_array(labels, n, 1);
+    
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
+
+    std::cout << "Labels: " << std::endl;
+    print_array(labels, n, 1);
+
+    std::cout << "Centroids:" << std::endl;
+    print_array(centroids, k, d);
+
+}
+
 void random_data(thrust::device_vector<double>& array, int m, int n) {
     thrust::host_vector<double> host_array(m*n);
     for(int i = 0; i < m * n; i++) {
@@ -77,6 +137,13 @@ void random_labels(thrust::device_vector<int>& labels, int n, int k) {
 
 
 int main() {
+    std::cout << "Tiny test" << std::endl;
+    tiny_test();
+
+    std::cout << "More Tiny test" << std::endl;
+    more_tiny_test();
+    std::cout << "End of More Tiny test" << std::endl;
+    
     int iterations = 50;
     int n = 1e6;
     int d = 50;
