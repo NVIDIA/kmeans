@@ -3,7 +3,6 @@
 #include <thrust/fill.h>
 #include <thrust/iterator/counting_iterator.h>
 
-
 __device__ double atomicAdd(double* address, double val)
 {
     unsigned long long int* address_as_ull =
