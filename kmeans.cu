@@ -41,7 +41,7 @@ int kmeans(int iterations,
             double delta = distance_sum / prior_distance_sum;
             if (delta > 1 - threshold) {
                 std::cout << "Threshold triggered, terminating iterations early" << std::endl;
-                break;
+                return i + 1;
             }
         }
         prior_distance_sum = distance_sum;
