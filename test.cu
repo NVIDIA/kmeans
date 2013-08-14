@@ -42,7 +42,8 @@ void tiny_test() {
     thrust::device_vector<double> data(n * d);
     thrust::device_vector<int> labels(n);
     thrust::device_vector<double> centroids(k * d);
-
+    thrust::device_vector<double> distances(n);
+    
     fill_array(data, n, d);
     std::cout << "Data: " << std::endl;
     print_array(data, n, d);
@@ -56,13 +57,16 @@ void tiny_test() {
     std::cout << "Labels: " << std::endl;
     print_array(labels, n, 1);
     
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
 
     std::cout << "Labels: " << std::endl;
     print_array(labels, n, 1);
 
     std::cout << "Centroids:" << std::endl;
     print_array(centroids, k, d);
+
+    std::cout << "Distances:" << std::endl;
+    print_array(distances, n, 1);
 
 }
 
@@ -103,8 +107,9 @@ void more_tiny_test() {
 	thrust::device_vector<double> data(dataset, dataset+n*d);
     thrust::device_vector<int> labels(n);
     thrust::device_vector<double> centroids(centers, centers+k*d);
+    thrust::device_vector<double> distances(n);
     
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, false);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances, false);
 
     std::cout << "Labels: " << std::endl;
     print_array(labels, n, 1);
@@ -143,7 +148,8 @@ int main() {
     thrust::device_vector<double> data(n * d);
     thrust::device_vector<int> labels(n);
     thrust::device_vector<double> centroids(k * d);
-
+    thrust::device_vector<double> distances(n);
+    
     std::cout << "Generating random data" << std::endl;
     std::cout << "Number of points: " << n << std::endl;
     std::cout << "Number of dimensions: " << d << std::endl;
@@ -154,7 +160,7 @@ int main() {
     random_labels(labels, n, k);
     kmeans::timer t;
     t.start();
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
     float time = t.stop();
     std::cout << "  Time: " << time/1000.0 << " s" << std::endl;
 

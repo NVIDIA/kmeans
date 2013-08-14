@@ -119,20 +119,23 @@ void calculate_distances(int n, int d, int k,
 
 }
                          
-__global__ void make_new_labels(int n, int k, double* distances, int* labels, int* changes) {
+__global__ void make_new_labels(int n, int k, double* pairwise_distances,
+                                int* labels, int* changes,
+                                double* distances) {
     double min_distance = DBL_MAX;
     double min_idx = -1;
     int global_id = threadIdx.x + blockIdx.x * blockDim.x;
     if (global_id < n) {
         int old_label = labels[global_id];
         for(int c = 0; c < k; c++) {
-            double distance = distances[c * n + global_id];
+            double distance = pairwise_distances[c * n + global_id];
             if (distance < min_distance) {
                 min_distance = distance;
                 min_idx = c;
             }
         }
         labels[global_id] = min_idx;
+        distances[global_id] = min_distance;
         if (old_label != min_idx) {
             atomicAdd(changes, 1);
         }
@@ -141,15 +144,17 @@ __global__ void make_new_labels(int n, int k, double* distances, int* labels, in
 
 
 int relabel(int n, int k,
-             thrust::device_vector<double>& pairwise_distances,
-             thrust::device_vector<int>& labels) {
+            thrust::device_vector<double>& pairwise_distances,
+            thrust::device_vector<int>& labels,
+            thrust::device_vector<double>& distances) {
     thrust::device_vector<int> changes(1);
     changes[0] = 0;
     make_new_labels<<<(n-1)/256+1,256>>>(
         n, k,
         thrust::raw_pointer_cast(pairwise_distances.data()),
         thrust::raw_pointer_cast(labels.data()),
-        thrust::raw_pointer_cast(changes.data()));
+        thrust::raw_pointer_cast(changes.data()),
+        thrust::raw_pointer_cast(distances.data()));
     return changes[0];
 }
 

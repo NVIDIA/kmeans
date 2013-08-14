@@ -18,16 +18,26 @@ namespace kmeans {
   positions [x * d, (x + 1) * d) in the vector. The vector is passed
   by reference since it is shared with the caller and not copied.
   \param labels Cluster labels. This vector has size n.
-  The vector is passed
-  by reference since it is shared with the caller and not copied.
+  The vector is passed by reference since it is shared with the caller
+  and not copied.
   \param centroids Centroid locations, in row-major order. This
   vector must have size k * d, and since it's in row-major order,
   centroid x occupies positions [x * d, (x + 1) * d) in the
   vector. The vector is passed by reference since it is shared
   with the caller and not copied.
+  \param distances Distances from points to centroids. This vector has
+  size n. It is passed by reference since it is shared with the caller
+  and not copied.
   \param init_from_labels If true, the labels need to be initialized
   before calling kmeans. If false, the centroids need to be
-  initialized before calling kmeans.
+  initialized before calling kmeans. Defaults to true, which means
+  the labels must be initialized.
+  \param threshold This controls early termination of the kmeans
+  iterations. If the ratio of the sum of distances from points to
+  centroids from this iteration to the previous iteration changes by
+  less than the threshold, than the iterations are
+  terminated. Defaults to 0.000001
+
 */
 
 void kmeans(int iterations,
@@ -35,6 +45,9 @@ void kmeans(int iterations,
             thrust::device_vector<double>& data,
             thrust::device_vector<int>& labels,
             thrust::device_vector<double>& centroids,
-            bool init_from_labels=true);
+            thrust::device_vector<double>& distances,
+            bool init_from_labels=true,
+            double threshold=0.000001
+    );
 
 }

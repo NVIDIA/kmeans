@@ -22,8 +22,9 @@ void calculate_distances(int n, int d, int k,
                          thrust::device_vector<double>& pairwise_distances);
 
 int relabel(int n, int k,
-             thrust::device_vector<double>& pairwise_distances,
-             thrust::device_vector<int>& labels); 
+            thrust::device_vector<double>& pairwise_distances,
+            thrust::device_vector<int>& labels,
+            thrust::device_vector<double>& distances); 
 
 }
 }
