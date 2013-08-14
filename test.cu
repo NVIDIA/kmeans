@@ -57,7 +57,8 @@ void tiny_test() {
     std::cout << "Labels: " << std::endl;
     print_array(labels, n, 1);
     
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
+    int i = kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
+    std::cout << "Performed " << i << " iterations" << std::endl;
 
     std::cout << "Labels: " << std::endl;
     print_array(labels, n, 1);

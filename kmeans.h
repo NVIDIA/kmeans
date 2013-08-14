@@ -37,10 +37,10 @@ namespace kmeans {
   centroids from this iteration to the previous iteration changes by
   less than the threshold, than the iterations are
   terminated. Defaults to 0.000001
-
+  \return The number of iterations actually performed.
 */
 
-void kmeans(int iterations,
+int kmeans(int iterations,
             int n, int d, int k,
             thrust::device_vector<double>& data,
             thrust::device_vector<int>& labels,
