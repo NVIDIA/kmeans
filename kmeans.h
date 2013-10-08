@@ -42,10 +42,11 @@ namespace kmeans {
 
 int kmeans(int iterations,
             int n, int d, int k,
-            thrust::device_vector<double>& data,
-            thrust::device_vector<int>& labels,
-            thrust::device_vector<double>& centroids,
-            thrust::device_vector<double>& distances,
+            thrust::device_vector<double>** data,
+            thrust::device_vector<int>** labels,
+            thrust::device_vector<double>** centroids,
+            thrust::device_vector<double>** distances,
+            int n_gpu=1,
             bool init_from_labels=true,
             double threshold=0.000001
     );

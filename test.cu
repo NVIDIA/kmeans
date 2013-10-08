@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "util.h"
 #include <iostream>
+#include "cuda.h"
 
 #include <cstdlib>
 
@@ -39,36 +40,42 @@ void tiny_test() {
     int k = 2;
 
     
-    thrust::device_vector<double> data(n * d);
-    thrust::device_vector<int> labels(n);
-    thrust::device_vector<double> centroids(k * d);
-    thrust::device_vector<double> distances(n);
-    
-    fill_array(data, n, d);
+    thrust::device_vector<double> *data[1];
+    thrust::device_vector<int> *labels[1];
+    thrust::device_vector<double> *centroids[1];
+    thrust::device_vector<double> *distances[1];
+    data[0] = new thrust::device_vector<double>(n * d);
+    labels[0] = new thrust::device_vector<int>(n);
+    centroids[0] = new thrust::device_vector<double>(k * d);
+    distances[0] = new thrust::device_vector<double>(n);
+
+    fill_array(*data[0], n, d);
     std::cout << "Data: " << std::endl;
-    print_array(data, n, d);
+    print_array(*data[0], n, d);
 
-    labels[0] = 0;
-    labels[1] = 0;
-    labels[2] = 0;
-    labels[3] = 1;
-    labels[4] = 1;
+    (*labels[0])[0] = 0;
+    (*labels[0])[1] = 0;
+    (*labels[0])[2] = 0;
+    (*labels[0])[3] = 1;
+    (*labels[0])[4] = 1;
 
     std::cout << "Labels: " << std::endl;
-    print_array(labels, n, 1);
+    print_array(*labels[0], n, 1);
     
-    int i = kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
-    std::cout << "Performed " << i << " iterations" << std::endl;
+    int i = kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances, 1);
 
     std::cout << "Labels: " << std::endl;
-    print_array(labels, n, 1);
+    print_array(*labels[0], n, 1);
 
     std::cout << "Centroids:" << std::endl;
-    print_array(centroids, k, d);
+    print_array(*centroids[0], k, d);
 
     std::cout << "Distances:" << std::endl;
-    print_array(distances, n, 1);
-
+    print_array(*distances[0], n, 1);
+    delete(data[0]);
+    delete(labels[0]);
+    delete(centroids[0]);
+    delete(distances[0]);
 }
 
 
@@ -105,18 +112,23 @@ void more_tiny_test() {
     int d = 2;
     int k = 4;
 	
-	thrust::device_vector<double> data(dataset, dataset+n*d);
-    thrust::device_vector<int> labels(n);
-    thrust::device_vector<double> centroids(centers, centers+k*d);
-    thrust::device_vector<double> distances(n);
+    thrust::device_vector<double> *data[1];
+    thrust::device_vector<int> *labels[1];
+    thrust::device_vector<double> *centroids[1];
+    thrust::device_vector<double> *distances[1];
+    data[0] = new thrust::device_vector<double>(dataset, dataset+n*d);
+    labels[0] = new thrust::device_vector<int>(n);
+    centroids[0] = new thrust::device_vector<double>(centers, centers+k*d);
+    distances[0] = new thrust::device_vector<double>(n);
+
     
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances, false);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances, 1, false);
 
     std::cout << "Labels: " << std::endl;
-    print_array(labels, n, 1);
+    print_array(*labels[0], n, 1);
 
     std::cout << "Centroids:" << std::endl;
-    print_array(centroids, k, d);
+    print_array(*centroids[0], k, d);
 
 }
 
@@ -128,7 +140,8 @@ int main() {
     std::cout << "More tiny test: m" << std::endl;
     std::cout << "Huge test: h: " << std::endl;
     char c;
-    std::cin >> c;
+    //std::cin >> c;
+    c = 'h';
     switch (c) {
     case 't':
         tiny_test();
@@ -146,24 +159,44 @@ int main() {
     int d = 50;
     int k = 100;
 
-    thrust::device_vector<double> data(n * d);
-    thrust::device_vector<int> labels(n);
-    thrust::device_vector<double> centroids(k * d);
-    thrust::device_vector<double> distances(n);
+    int n_gpu;
     
+    cudaGetDeviceCount(&n_gpu);
+
+    //n_gpu = 1;
+    std::cout << n_gpu << " gpus." << std::endl;
+
+    thrust::device_vector<double> *data[16];
+    thrust::device_vector<int> *labels[16];
+    thrust::device_vector<double> *centroids[16];
+    thrust::device_vector<double> *distances[16];
+    for (int q = 0; q < n_gpu; q++) {
+       cudaSetDevice(q);
+       data[q] = new thrust::device_vector<double>(n/n_gpu*d);
+       labels[q] = new thrust::device_vector<int>(n/n_gpu*d);
+       centroids[q] = new thrust::device_vector<double>(k * d);
+       distances[q] = new thrust::device_vector<double>(n);
+    }
+
     std::cout << "Generating random data" << std::endl;
     std::cout << "Number of points: " << n << std::endl;
     std::cout << "Number of dimensions: " << d << std::endl;
     std::cout << "Number of clusters: " << k << std::endl;
     std::cout << "Number of iterations: " << iterations << std::endl;
     
-    random_data(data, n, d);
-    random_labels(labels, n, k);
+    for (int q = 0; q < n_gpu; q++) {
+       random_data(*data[q], n/n_gpu, d);
+       random_labels(*labels[q], n/n_gpu, k);
+    }
     kmeans::timer t;
     t.start();
-    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances);
+    kmeans::kmeans(iterations, n, d, k, data, labels, centroids, distances, n_gpu);
     float time = t.stop();
     std::cout << "  Time: " << time/1000.0 << " s" << std::endl;
 
-    
+    for (int q = 0; q < n_gpu; q++) {
+       delete(data[q]);
+       delete(labels[q]);
+       delete(centroids[q]);
+    }
 }

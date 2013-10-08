@@ -3,6 +3,8 @@
 #include <thrust/fill.h>
 #include <thrust/iterator/counting_iterator.h>
 
+#include "labels.h"
+
 __device__ double atomicAdd(double* address, double val)
 {
     unsigned long long int* address_as_ull =
@@ -93,32 +95,36 @@ __global__ void scale_centroids(int d, int k, int* counts, double* centroids) {
 
 void find_centroids(int n, int d, int k,
                     thrust::device_vector<double>& data,
-                    //Labels are taken by value because
-                    //they get destroyed in sort_by_key
-                    //So we need to make a copy of them
-                    thrust::device_vector<int> labels,
-                    thrust::device_vector<double>& centroids) {
-    thrust::device_vector<int> indices(n);
-    thrust::device_vector<int> counts(k);
-    thrust::copy(thrust::counting_iterator<int>(0),
-                 thrust::counting_iterator<int>(n),
-                 indices.begin());
+                    thrust::device_vector<int>& labels,
+                    thrust::device_vector<double>& centroids,
+                    thrust::device_vector<int>& range,
+                    thrust::device_vector<int>& indices,
+                    thrust::device_vector<int>& counts) {
+    int dev_num;
+    cudaGetDevice(&dev_num);
+    detail::memcpy(indices,range);
     //Bring all labels with the same value together
+#if 0
     thrust::sort_by_key(labels.begin(),
                         labels.end(),
                         indices.begin());
+#else
+    mycub::sort_by_key_int(labels, indices);
+#endif
 
     //Initialize centroids to all zeros
-    thrust::fill(centroids.begin(),
-                 centroids.end(),
-                 0);
+    detail::memzero(centroids);
+
+    //Initialize counts to all zeros
+    detail::memzero(counts);
     
     //Calculate centroids 
     int n_threads_x = 64;
     int n_threads_y = 16;
     //XXX Number of blocks here is hard coded at 30
     //This should be taken care of more thoughtfully.
-    detail::calculate_centroids<<<dim3(1, 30), dim3(n_threads_x, n_threads_y)>>>
+    detail::calculate_centroids<<<dim3(1, 30), dim3(n_threads_x, n_threads_y),
+                                  0, cuda_stream[dev_num]>>>
         (n, d, k,
          thrust::raw_pointer_cast(data.data()),
          thrust::raw_pointer_cast(labels.data()),
@@ -127,7 +133,8 @@ void find_centroids(int n, int d, int k,
          thrust::raw_pointer_cast(counts.data()));
     
     //Scale centroids
-    detail::scale_centroids<<<dim3((d-1)/32+1, (k-1)/32+1), dim3(32, 32)>>>
+    detail::scale_centroids<<<dim3((d-1)/32+1, (k-1)/32+1), dim3(32, 32),
+                              0, cuda_stream[dev_num]>>>
         (d, k,
          thrust::raw_pointer_cast(counts.data()),
          thrust::raw_pointer_cast(centroids.data()));
