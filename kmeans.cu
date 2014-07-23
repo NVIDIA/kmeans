@@ -42,7 +42,7 @@ int kmeans(int iterations,
         indices[q] = new thrust::device_vector<int>(n/n_gpu);
         //Create and save "range" for initializing labels
         thrust::copy(thrust::counting_iterator<int>(0),
-                     thrust::counting_iterator<int>(n), 
+                     thrust::counting_iterator<int>(n/n_gpu), 
                      (*range[q]).begin());
 
         detail::make_self_dots(n/n_gpu, d, *data[q], *data_dots[q]);
