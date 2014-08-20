@@ -1,0 +1,23 @@
+** Building kmeans for GPU **
+
+Prereq:
+CUB (https://github.com/nvlabs/CUB)
+CUDA
+
+Either modify Makefile to specify the path to CUB, or specify CUB_HOME on your make invocation
+
+%> make CUB_HOME=/home-2/lbarnes/CUB/cub-1.0.2
+
+By default, it will compile with some additional data exchange between CPU and GPU in order to provide updates on screen with each iteration. This reduces performance a bit. Disable these by setting USERFLAGS to ""
+
+%> make CUDA_HOME=/home-2/lbarnes/CUB/cub-1.0.2 USERFLAGS=""
+
+** Running **
+
+The code is set to generate random data and cluster a set of 5M points of dimension 50. By default it iterates 100 times. Adjust these parameters in test.cu. It will use all the GPUs it finds. Use CUDA_VISIBLE_DEVICES to limit the number of GPUs.
+
+
+
+
+
+

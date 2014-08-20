@@ -86,7 +86,7 @@ int kmeans(int iterations,
             //double d_distance_sum[q] = thrust::reduce(distances[q].begin(), distances[q].end())
             mycub::sum_reduce(*distances[q], d_distance_sum[q]);
         }
-#if 1
+#if __VERBOSE
         double distance_sum = 0.0;
         for (int q = 0; q < n_gpu; q++) {
             cudaMemcpyAsync(h_changes+q, d_changes[q], sizeof(int), cudaMemcpyDeviceToHost, cuda_stream[q]);

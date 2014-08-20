@@ -154,8 +154,8 @@ int main() {
     default:
         std::cout << "Choice not understood, running huge test" << std::endl;
     }
-    int iterations = 50;
-    int n = 1e6;
+    int iterations = 100;
+    int n = 5e6;
     int d = 50;
     int k = 100;
 
