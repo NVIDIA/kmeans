@@ -1,4 +1,4 @@
-kmeans
+k-means
 ======
 
 A simple kmeans clustering implementation for double precision data,
